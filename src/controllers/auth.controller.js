@@ -1,6 +1,6 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const db = require('../config/db');
+const { dbQuery } = require('../utils/dbRetry');
 
 const EDU_TR_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.edu\.tr$/;
 
@@ -28,7 +28,7 @@ exports.register = async (req, res) => {
       return res.status(400).json({ message: 'Şifre en az 6 karakter olmalıdır' });
     }
 
-    const existing = await db.query(
+    const existing = await dbQuery(
       'SELECT id FROM users WHERE university_email = $1',
       [university_email]
     );
@@ -39,7 +39,7 @@ exports.register = async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const result = await db.query(
+    const result = await dbQuery(
       `INSERT INTO users (full_name, university_email, password, university, department)
        VALUES ($1, $2, $3, $4, $5)
        RETURNING id, full_name, university_email, university, department, created_at`,
@@ -72,7 +72,7 @@ exports.login = async (req, res) => {
       return res.status(400).json({ message: 'Sadece .edu.tr uzantılı üniversite e-postaları kabul edilir' });
     }
 
-    const result = await db.query(
+    const result = await dbQuery(
       'SELECT * FROM users WHERE university_email = $1',
       [university_email]
     );

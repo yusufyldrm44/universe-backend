@@ -86,11 +86,29 @@ const createTables = async () => {
     )`
   ];
 
+  const alterQueries = [
+    `ALTER TABLE listings ADD COLUMN IF NOT EXISTS city VARCHAR(100)`,
+    `ALTER TABLE listings ADD COLUMN IF NOT EXISTS condition VARCHAR(50)`,
+    `ALTER TABLE listings ADD COLUMN IF NOT EXISTS extra_data JSONB`,
+    `ALTER TABLE listings ADD COLUMN IF NOT EXISTS view_count INTEGER DEFAULT 0`,
+    `ALTER TABLE users ADD COLUMN IF NOT EXISTS role VARCHAR(20) DEFAULT 'user'`,
+    `ALTER TABLE listings ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'pending'`,
+    `ALTER TABLE events ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'pending'`,
+    `ALTER TABLE listings DROP CONSTRAINT IF EXISTS listings_type_check`,
+    `ALTER TABLE listings ADD CONSTRAINT listings_type_check CHECK (type IN ('item','house','roommate','job','internship'))`
+  ];
+
   try {
     for (const q of queries) {
       await db.query(q);
     }
     console.log('Tüm tablolar başarıyla oluşturuldu');
+
+    for (const q of alterQueries) {
+      await db.query(q);
+    }
+    console.log('Sütun güncellemeleri tamamlandı (city, condition, extra_data, view_count, role, status)');
+
     process.exit(0);
   } catch (err) {
     console.error('Migration hatası:', err);

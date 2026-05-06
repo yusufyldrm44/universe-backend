@@ -9,6 +9,7 @@ router.get('/rooms', auth, async (req, res) => {
       `SELECT cr.*,
               CASE WHEN cr.user1_id = $1 THEN cr.user2_id ELSE cr.user1_id END AS other_user_id,
               u.full_name AS other_user_name,
+              u.university AS other_user_university,
               u.avatar_url AS other_user_avatar,
               (SELECT content FROM messages WHERE room_id = cr.id ORDER BY created_at DESC LIMIT 1) AS last_message,
               (SELECT created_at FROM messages WHERE room_id = cr.id ORDER BY created_at DESC LIMIT 1) AS last_message_at

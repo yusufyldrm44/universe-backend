@@ -12,6 +12,7 @@ const listingRoutes = require('./routes/listing.routes');
 const eventRoutes = require('./routes/event.routes');
 const newsRoutes = require('./routes/news.routes');
 const messageRoutes = require('./routes/message.routes');
+const adminRoutes = require('./routes/admin.routes');
 
 const app = express();
 const server = http.createServer(app);
@@ -35,14 +36,29 @@ app.use('/api/listings', listingRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/news', newsRoutes);
 app.use('/api/messages', messageRoutes);
-
-app.use((err, req, res, next) => {
-  console.error('Hata:', err);
-  res.status(500).json({ message: 'Sunucu hatası', error: err.message });
-});
+app.use('/api/admin', adminRoutes);
 
 app.use((req, res) => {
   res.status(404).json({ message: 'Endpoint bulunamadı' });
+});
+
+app.use((err, req, res, next) => {
+  console.error('--- Sunucu Hatası ---');
+  console.error('URL:', req.method, req.originalUrl);
+  console.error('Mesaj:', err.message);
+  console.error('Kod:', err.code || 'yok');
+  console.error('Stack:', err.stack);
+  console.error('---------------------');
+
+  const isProd = process.env.NODE_ENV === 'production';
+  const payload = {
+    message: 'Sunucuda beklenmeyen bir hata oluştu, lütfen tekrar deneyin'
+  };
+  if (!isProd) {
+    payload.error = err.message;
+    payload.stack = err.stack;
+  }
+  res.status(err.status || 500).json(payload);
 });
 
 io.use((socket, next) => {
@@ -111,8 +127,23 @@ io.on('connection', (socket) => {
 });
 
 const PORT = process.env.PORT || 5000;
-server.listen(PORT, () => {
+server.listen(PORT, async () => {
   console.log(`UniVerse backend ${PORT} portunda çalışıyor`);
+
+  try {
+    await db.query('SELECT 1');
+    console.log('DB warmup tamam');
+  } catch (err) {
+    console.error('DB warmup başarısız:', err.message);
+  }
+
+  setInterval(async () => {
+    try {
+      await db.query('SELECT 1');
+    } catch (err) {
+      console.error('DB keepalive başarısız:', err.message);
+    }
+  }, 5 * 60 * 1000);
 });
 
 module.exports = { app, io };

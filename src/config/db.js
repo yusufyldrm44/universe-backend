@@ -3,7 +3,11 @@ require('dotenv').config();
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false }
+  ssl: { rejectUnauthorized: false },
+  max: 10,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 10000,
+  keepAlive: true
 });
 
 pool.on('connect', () => {
@@ -11,8 +15,7 @@ pool.on('connect', () => {
 });
 
 pool.on('error', (err) => {
-  console.error('PostgreSQL bağlantı hatası:', err);
-  process.exit(-1);
+  console.error('PostgreSQL pool hatası (uygulama çalışmaya devam ediyor):', err.message);
 });
 
 module.exports = {

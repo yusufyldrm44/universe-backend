@@ -10,6 +10,7 @@ router.get('/', async (req, res) => {
               (SELECT COUNT(*) FROM event_participants WHERE event_id = e.id) AS participant_count
        FROM events e
        JOIN users u ON e.user_id = u.id
+       WHERE e.status = 'active'
        ORDER BY e.event_date ASC`
     );
     res.json({ events: result.rows });
@@ -47,12 +48,12 @@ router.post('/', auth, async (req, res) => {
     }
 
     const result = await db.query(
-      `INSERT INTO events (user_id, title, description, location, event_date, capacity, image_url)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
+      `INSERT INTO events (user_id, title, description, location, event_date, capacity, image_url, status)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending')
        RETURNING *`,
       [req.user.id, title, description || null, location || null, event_date, capacity || null, image_url || null]
     );
-    res.status(201).json({ message: 'Etkinlik oluşturuldu', event: result.rows[0] });
+    res.status(201).json({ message: 'Etkinlik oluşturuldu, onay bekleniyor.', event: result.rows[0] });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Sunucu hatası' });
