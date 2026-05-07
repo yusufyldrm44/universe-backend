@@ -1,7 +1,26 @@
 const express = require('express');
 const router = express.Router();
+const multer = require('multer');
+const path = require('path');
 const db = require('../config/db');
 const auth = require('../middleware/auth.middleware');
+
+const avatarStorage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, 'uploads/avatars/'),
+  filename: (req, file, cb) => {
+    const unique = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
+    cb(null, `avatar-${req.user.id}-${unique}${path.extname(file.originalname)}`);
+  },
+});
+
+const avatarUpload = multer({
+  storage: avatarStorage,
+  limits: { fileSize: 3 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) cb(null, true);
+    else cb(new Error('Sadece resim dosyaları yüklenebilir'), false);
+  },
+});
 
 router.get('/search', auth, async (req, res) => {
   const { q } = req.query;
@@ -45,19 +64,42 @@ router.put('/me', auth, async (req, res) => {
     const { full_name, university, department, bio, avatar_url } = req.body;
     const result = await db.query(
       `UPDATE users
-       SET full_name = COALESCE($1, full_name),
+       SET full_name  = COALESCE($1, full_name),
            university = COALESCE($2, university),
            department = COALESCE($3, department),
-           bio = COALESCE($4, bio),
+           bio        = COALESCE($4, bio),
            avatar_url = COALESCE($5, avatar_url),
            updated_at = CURRENT_TIMESTAMP
        WHERE id = $6
-       RETURNING id, full_name, university_email, university, department, avatar_url, bio`,
+       RETURNING id, full_name, university_email, university, department, avatar_url, bio, role`,
       [full_name, university, department, bio, avatar_url, req.user.id]
     );
     res.json({ message: 'Profil güncellendi', user: result.rows[0] });
   } catch (err) {
     console.error(err);
+    res.status(500).json({ message: 'Sunucu hatası' });
+  }
+});
+
+router.post('/me/avatar', auth, avatarUpload.single('avatar'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: 'Dosya yüklenmedi' });
+    }
+
+    const avatarUrl = req.file.path.replace(/\\/g, '/');
+
+    const result = await db.query(
+      `UPDATE users
+       SET avatar_url = $1, updated_at = CURRENT_TIMESTAMP
+       WHERE id = $2
+       RETURNING id, full_name, university_email, university, department, avatar_url, bio, role`,
+      [avatarUrl, req.user.id]
+    );
+
+    res.json({ message: 'Avatar güncellendi', avatar_url: avatarUrl, user: result.rows[0] });
+  } catch (err) {
+    console.error('Avatar upload hatası:', err);
     res.status(500).json({ message: 'Sunucu hatası' });
   }
 });

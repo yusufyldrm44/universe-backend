@@ -37,6 +37,7 @@ app.use('/api/events', eventRoutes);
 app.use('/api/news', newsRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/ai', require('./routes/ai.routes'));
 
 app.use((req, res) => {
   res.status(404).json({ message: 'Endpoint bulunamadı' });

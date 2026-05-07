@@ -95,7 +95,8 @@ const createTables = async () => {
     `ALTER TABLE listings ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'pending'`,
     `ALTER TABLE events ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'pending'`,
     `ALTER TABLE listings DROP CONSTRAINT IF EXISTS listings_type_check`,
-    `ALTER TABLE listings ADD CONSTRAINT listings_type_check CHECK (type IN ('item','house','roommate','job','internship'))`
+    `ALTER TABLE listings ADD CONSTRAINT listings_type_check CHECK (type IN ('item','house','roommate','job','internship'))`,
+    `ALTER TABLE users ADD COLUMN IF NOT EXISTS bio TEXT`
   ];
 
   try {
