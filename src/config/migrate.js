@@ -83,6 +83,32 @@ const createTables = async () => {
       user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
       joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       UNIQUE(event_id, user_id)
+    )`,
+
+    `CREATE TABLE IF NOT EXISTS forum_topics (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+      category VARCHAR(50) NOT NULL DEFAULT 'genel',
+      title VARCHAR(200) NOT NULL,
+      content TEXT NOT NULL,
+      is_pinned BOOLEAN DEFAULT FALSE,
+      view_count INTEGER DEFAULT 0,
+      created_at TIMESTAMP DEFAULT NOW(),
+      updated_at TIMESTAMP DEFAULT NOW()
+    )`,
+
+    `CREATE TABLE IF NOT EXISTS forum_replies (
+      id SERIAL PRIMARY KEY,
+      topic_id INTEGER REFERENCES forum_topics(id) ON DELETE CASCADE,
+      user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+      content TEXT NOT NULL,
+      created_at TIMESTAMP DEFAULT NOW()
+    )`,
+
+    `CREATE TABLE IF NOT EXISTS forum_likes (
+      user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+      topic_id INTEGER REFERENCES forum_topics(id) ON DELETE CASCADE,
+      PRIMARY KEY (user_id, topic_id)
     )`
   ];
 
@@ -96,7 +122,8 @@ const createTables = async () => {
     `ALTER TABLE events ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'pending'`,
     `ALTER TABLE listings DROP CONSTRAINT IF EXISTS listings_type_check`,
     `ALTER TABLE listings ADD CONSTRAINT listings_type_check CHECK (type IN ('item','house','roommate','job','internship'))`,
-    `ALTER TABLE users ADD COLUMN IF NOT EXISTS bio TEXT`
+    `ALTER TABLE users ADD COLUMN IF NOT EXISTS bio TEXT`,
+    `ALTER TABLE forum_topics ADD COLUMN IF NOT EXISTS attachments JSONB DEFAULT '[]'`
   ];
 
   try {

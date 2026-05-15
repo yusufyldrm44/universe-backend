@@ -25,6 +25,7 @@ app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use('/uploads', express.static('uploads'));
+app.use('/uploads/forum', express.static('uploads/forum'));
 
 app.get('/', (req, res) => {
   res.json({ message: 'UniVerse API çalışıyor', version: '1.0.0' });
@@ -38,6 +39,7 @@ app.use('/api/news', newsRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/ai', require('./routes/ai.routes'));
+app.use('/api/forum', require('./routes/forum.routes'));
 
 app.use((req, res) => {
   res.status(404).json({ message: 'Endpoint bulunamadı' });

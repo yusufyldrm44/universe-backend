@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(node src/config/migrate.js)"
+      "Bash(node src/config/migrate.js)",
+      "Bash(npm run *)"
     ]
   }
 }
